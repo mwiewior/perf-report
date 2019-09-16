@@ -1,0 +1,100 @@
+---
+title: "Performance report"
+author: "Getindata"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+params:
+  data_dir: /Users/marek/Downloads/TVN/test
+  pynmon_path: /Users/marek/miniconda3/bin/pyNmonAnalyzer
+  output_dir: /tmp/
+  stats_files: !r c('CPU_ALL.csv')
+  group_dirs: !r c("A","B")
+  group_labels: !r a<-c("without nb", "with nb") ; names(a)<-c("A","B"); a
+  tests: !r c("hql")
+  p_threshold: 0.01
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(purrr)
+library(tidyr)
+library(ggplot2)
+```
+
+```{r echo=FALSE, out.width='100%', fig.align='center'}
+knitr::include_graphics('./img/logo_getin.png')
+knitr::include_graphics('./img/logo_tvn.png')
+#cleanup
+  for(t in params$tests) {
+    system(paste("rm -rf /tmp",t,sep="/") )
+  }
+```
+\pagebreak
+## Visualize Data and run nonparametric test
+
+
+```{r nmon, echo=FALSE,message=FALSE, warning=FALSE}
+for(g in params$group_dirs){
+  nmon_dirs <- paste(params$data_dir, g, sep="/"  )
+  for(t in params$tests) {
+    for(d in nmon_dirs){
+      nmon_files <- paste(d, t,"raw", dir(paste(d,t,"raw",sep="/")), sep="/")
+      for(f in nmon_files){
+        host = unlist(strsplit(tail(unlist(strsplit(f, split="/") ),1), split="_" ))[1]
+        commands <- paste(params$pynmon_path," -c -i", f, " -x -o ",paste(params$output_dir, t, host, g, sep="/"), sep="")
+        lapply(commands, FUN=system)
+        csv_dir_1 = paste(params$output_dir, t, host,params$group_dirs[1] ,"csv", sep="/")
+        csv_dir_2 = paste(params$output_dir, t, host,params$group_dirs[2] ,"csv", sep="/")
+        csv_files_1 = dir(csv_dir_1)
+        csv_files_2 = dir(csv_dir_2)
+        if(length(csv_files_2) > 0){
+          for(c in csv_files_2){
+            csv_path_1 = paste(csv_dir_1, c, sep="/")
+            data_1 <-read.csv(file=csv_path_1, header=TRUE, sep=",")
+            csv_path_2 = paste(csv_dir_2, c, sep="/")
+            data_2 <-read.csv(file=csv_path_2, header=TRUE, sep=",")
+            if (is.element(c,params$stats_files) ){
+              caption_1 <- paste (host,  "Basic stats for metric:", c, params$group_labels[1])
+              #print(summary(data[,-c(1)]) )
+              par(mfrow=c(2,1))
+               print(data_1 %>%
+                  keep(is.numeric) %>% 
+                  gather() %>% 
+                  ggplot(aes(value)) +
+                    facet_wrap(~ key, scales = "free") +
+                    geom_histogram()  + ggtitle(caption_1 ) )
+              caption_2 <- paste (host,  "Basic stats for metric:", c, params$group_labels[2]) 
+              print(data_2 %>%
+                  keep(is.numeric) %>% 
+                  gather() %>% 
+                  ggplot(aes(value)) +
+                    facet_wrap(~ key, scales = "free") +
+                    geom_histogram() + ggtitle(caption_2)
+                  )
+              
+                df1 <- data_1 %>% keep(is.numeric)
+                df2 <- data_2 %>% keep(is.numeric)
+                cat("\n\n\n")
+                print(
+                  map2(df1,df2,function(x,y) {
+                    ts <- ks.test(x,y, alternative="less")
+                    if(ts$p.value > params$p_threshold){
+                      msg <- paste("The p-value:", ts$p.value,"indicates there IS NO difference between two conditions(",params$p_threshold,")")
+                      msg
+                    }
+                    else{
+                      msg <- paste("The p-value:", ts$p.value,"indicates there IS A difference between two conditions(",params$p_threshold,")")
+                    }
+                    })
+                )
+          }
+       }
+      }
+      }
+   }
+  }
+}
+```
