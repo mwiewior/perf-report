@@ -1,0 +1,13 @@
+os_base_packages:
+  - epel-release
+  - python-pip
+
+r_core_packages:
+ - R-core
+ - R-devel
+ - libcurl-devel
+ - openssl-devel
+ - libxml2-devel
+ - pandoc
+
+

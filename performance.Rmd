@@ -7,8 +7,8 @@ output:
   html_document:
     df_print: paged
 params:
-  data_dir: /Users/marek/Downloads/TVN/test
-  pynmon_path: /Users/marek/miniconda3/bin/pyNmonAnalyzer
+  data_dir: /data
+  pynmon_path: /usr/local/bin/pyNmonAnalyzer
   output_dir: /tmp/
   stats_files: !r c('CPU_ALL.csv')
   group_dirs: !r c("A","B")
@@ -17,12 +17,17 @@ params:
   p_threshold: 0.01
 ---
 
+
+
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(purrr)
 library(tidyr)
 library(ggplot2)
 ```
+
+
+
 
 ```{r echo=FALSE, out.width='100%', fig.align='center'}
 knitr::include_graphics('./img/logo_getin.png')
@@ -44,7 +49,7 @@ for(g in params$group_dirs){
       nmon_files <- paste(d, t,"raw", dir(paste(d,t,"raw",sep="/")), sep="/")
       for(f in nmon_files){
         host = unlist(strsplit(tail(unlist(strsplit(f, split="/") ),1), split="_" ))[1]
-        commands <- paste(params$pynmon_path," -c -i", f, " -x -o ",paste(params$output_dir, t, host, g, sep="/"), sep="")
+        commands <- paste("LC_CTYPE=en_US.UTF-8 ",params$pynmon_path," -c -i", f, " -x -o ",paste(params$output_dir, t, host, g, sep="/"), sep="")
         lapply(commands, FUN=system)
         csv_dir_1 = paste(params$output_dir, t, host,params$group_dirs[1] ,"csv", sep="/")
         csv_dir_2 = paste(params$output_dir, t, host,params$group_dirs[2] ,"csv", sep="/")

@@ -1,0 +1,18 @@
+version: "2"
+settings:
+  conductor:
+    # The Conductor container does the heavy lifting, and provides a portable
+    # Python runtime for building your target containers. It should be derived
+    # from the same distribution as you're building your target containers with.
+    base: ubuntu:xenial
+  project_name: perf-report-docker
+services:
+  perf-report-generator:
+    from: "ubuntu:xenial"
+    roles:
+      - gid-python-packages
+      - gid-r-packages
+      - gid-base
+    dev_overrides:
+      environment:
+      - "DEBUG=1"

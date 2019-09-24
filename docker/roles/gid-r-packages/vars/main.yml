@@ -1,0 +1,9 @@
+cran_mirror: http://cran.r-project.org
+r_major_version: 3.6
+r_knitr_packages:
+  - knitr
+  - purrr
+  - tidyr
+  - ggplot2
+  - rmarkdown
+  - pandoc

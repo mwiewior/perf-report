@@ -1,0 +1,30 @@
+- name: Set OS packages
+  include_vars: "{{ ansible_os_family }}.yml"
+
+
+- name: Install Python-pip
+  apt:
+    update_cache: yes
+    name: "{{item}}"
+  with_items:
+    - "{{os_base_packages}}"
+
+
+#- name: Upgrade pip
+#  pip:
+#    executable: /usr/bin/pip3
+#    name: "{{item}}"
+#  with_items:
+#  - pip
+
+- name: Upgrade pip
+  shell: python3 -m pip uninstall -y  pip && apt install -y  python3-pip --reinstall && pip3 install -U pip
+
+- name: Install pyNmonAnalyzer
+  pip:
+    name: "{{item}}"
+    executable: pip3
+  with_items:
+    - pyNmonAnalyzer
+    - numpy
+    - matplotlib

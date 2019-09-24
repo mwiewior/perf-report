@@ -1,0 +1,15 @@
+- name: Set R packages
+  include_vars: "{{ ansible_os_family }}.yml"
+
+- name: Install R core packages
+  package:
+    name: "{{item}}"
+  with_items:
+  - "{{r_core_packages}}"
+
+- name: Adding knitr packages
+  shell: echo "install.packages('{{item}}',repos=c('{{cran_mirror}}'))" | R --slave --no-save --no-restore-history
+  with_items:
+  - "{{r_knitr_packages}}"
+
+
