@@ -1,3 +1,7 @@
+# Script for starting/stopping NodeManagers
+# An example:
+#  python prepare_env.py --hosts  cdh-slave-02.c.getindata-training.internal,cdh-slave-03.c.getindata-training.internal --user admin --password admin --url http://localhost --port 7180 --action start
+
 import optparse
 
 parser = optparse.OptionParser()
@@ -41,11 +45,9 @@ hosts = options.hosts.split(',')
 
 print 'NodeManagers to start/stop:', hosts
 
-# host_ids_action = ['7487ddd7-e2fd-4357-bbb5-6757a68ef928']
 
 api = ApiResource(options.url.replace('http://','').replace('https://',''), options.port, options.user, options.password)
-# for h in api.get_all_hosts():
-#     print (h.hostId)
+
 host_ids_action = [h.hostId for h in api.get_all_hosts() if h.hostname in hosts]
 
 
