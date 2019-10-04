@@ -3,6 +3,7 @@
 #  python prepare_env.py --hosts  cdh-slave-02.c.getindata-training.internal,cdh-slave-03.c.getindata-training.internal --user admin --password admin --url http://localhost --port 7180 --action start
 
 import optparse
+import ssl
 
 parser = optparse.OptionParser()
 
@@ -38,6 +39,10 @@ parser.add_option('--action',
                   action="store", dest="action",
                   help="Start/stop node managers")
 
+parser.add_option('--ssl_cert_path',
+                  action="store", dest="ssl_cert_path",
+                  help="Path to ssl cerificate")
+
 
 options, args = parser.parse_args()
 
@@ -45,20 +50,23 @@ hosts = options.hosts.split(',')
 
 print 'NodeManagers to start/stop:', hosts
 
-
-api = ApiResource(options.url.replace('http://','').replace('https://',''), options.port, options.user, options.password)
-
+#print(options.url.replace('http://','').replace('https://',''))
+ssl_cert_path = options.ssl_cert_path
+context = ssl.create_default_context(cafile=ssl_cert_path)
+api = ApiResource(options.url.replace('http://','').replace('https://',''), options.port, options.user, options.password, use_tls=True,ssl_context=context)
 host_ids_action = [h.hostId for h in api.get_all_hosts() if h.hostname in hosts]
-
 
 cm_client.configuration.username = options.user
 cm_client.configuration.password = options.password
+cm_client.configuration.verify_ssl = True
+cm_client.configuration.ssl_ca_cert = ssl_cert_path
 
 # Create an instance of the API class
 api_host = options.url
 port = options.port
 api_version = 'v19'
 api_url = api_host + ':' + port + '/api/' + api_version
+print(api_url)
 api_client = cm_client.ApiClient(api_url)
 cluster_api_instance = cm_client.ClustersResourceApi(api_client)
 
